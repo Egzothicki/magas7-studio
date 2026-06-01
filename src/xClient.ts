@@ -72,8 +72,8 @@ async function uploadVideoChunked(filePath: string, creds: XCreds, log: (msg: st
   let segmentIndex = 0;
   for (let offset = 0; offset < totalBytes; offset += chunkSize) {
     const chunk = buf.subarray(offset, Math.min(offset + chunkSize, totalBytes));
-    const appendParams = { command: "APPEND", media_id: mediaId, segment_index: String(segmentIndex) };
-    const appendAuth = oauthHeader("POST", initUrl, appendParams, creds);
+    // OAuth 1.0a: multipart/form-data body params must NOT be signed — pass empty params.
+    const appendAuth = oauthHeader("POST", initUrl, {}, creds);
 
     const form = new FormData();
     form.append("command", "APPEND");
