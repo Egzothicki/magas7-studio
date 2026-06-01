@@ -5,7 +5,12 @@ export async function transcodeToMp4(webmPath: string, mp4Path: string): Promise
   return new Promise((resolve, reject) => {
     const args = [
       "-y",
+      // Inputs first.
       "-i", webmPath,
+      "-f", "lavfi", "-i", "anullsrc=cl=stereo:r=48000",
+      // Output options after all inputs.
+      "-map", "0:v:0",
+      "-map", "1:a:0",
       "-vf", "scale=1080:1080:flags=lanczos,fps=30",
       "-c:v", "libx264",
       "-pix_fmt", "yuv420p",
@@ -14,7 +19,6 @@ export async function transcodeToMp4(webmPath: string, mp4Path: string): Promise
       "-preset", "veryfast",
       "-crf", "22",
       "-movflags", "+faststart",
-      "-f", "lavfi", "-i", "anullsrc=cl=stereo:r=48000",
       "-c:a", "aac", "-b:a", "128k",
       "-shortest",
       mp4Path,
@@ -25,7 +29,7 @@ export async function transcodeToMp4(webmPath: string, mp4Path: string): Promise
     ff.on("error", reject);
     ff.on("close", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-500)}`));
+      else reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-2000)}`));
     });
   });
 }
