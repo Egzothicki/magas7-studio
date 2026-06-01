@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="base.css" />
+<style>
+  .stage { padding: 130px 64px 130px; }
+
+  .step-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--quiet);
+    margin-bottom: 14px;
+  }
+
+  .step-label .num { color: var(--signal); margin-right: 8px; }
+
+  /* SCENE 1 — Brief input */
+  .scene { position: absolute; inset: 130px 64px; }
+  .scene.s1 {
+    opacity: 0;
+    animation: fade-in 0.5s 0.1s forwards, fade-out 0.4s 3.0s forwards;
+  }
+
+  .brief-box {
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: 20px;
+    padding: 36px 40px;
+    margin-top: 16px;
+  }
+
+  .brief-prompt {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 22px;
+    color: var(--mute);
+    margin-bottom: 16px;
+  }
+
+  .brief-prompt .arrow { color: var(--signal); }
+
+  .brief-text {
+    font-size: 32px;
+    color: var(--bone);
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .caret {
+    display: inline-block;
+    width: 14px;
+    height: 36px;
+    background: var(--signal);
+    vertical-align: -6px;
+    margin-left: 4px;
+    animation: caret 0.7s steps(2) infinite;
+  }
+
+  @keyframes caret { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+  /* SCENE 2 — Agents activate */
+  .scene.s2 {
+    opacity: 0;
+    animation: fade-in 0.5s 3.2s forwards, fade-out 0.4s 7.0s forwards;
+  }
+
+  .agents-grid {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  .agent-chip {
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .agent-chip .name {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-top: 14px;
+  }
+
+  .agent-chip .status {
+    margin-top: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px;
+    color: var(--quiet);
+  }
+
+  .agent-chip.active .status { color: var(--signal); }
+  .agent-chip .pulse {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--quiet);
+    margin: 0 auto;
+  }
+  .agent-chip.active .pulse {
+    background: var(--signal);
+    box-shadow: 0 0 16px var(--signal);
+    animation: pulse-glow 1.4s ease-in-out infinite;
+  }
+
+  .agent-chip:nth-child(1) { animation: chip-in 0.4s 3.3s forwards; }
+  .agent-chip:nth-child(2) { animation: chip-in 0.4s 3.45s forwards; }
+  .agent-chip:nth-child(3) { animation: chip-in 0.4s 3.6s forwards; }
+  .agent-chip:nth-child(4) { animation: chip-in 0.4s 3.75s forwards; }
+  .agent-chip:nth-child(5) { animation: chip-in 0.4s 3.9s forwards; }
+  .agent-chip:nth-child(6) { animation: chip-in 0.4s 4.05s forwards; }
+  .agent-chip:nth-child(7) { animation: chip-in 0.4s 4.2s forwards; }
+
+  @keyframes chip-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SCENE 3 — Output */
+  .scene.s3 {
+    opacity: 0;
+    animation: fade-in 0.5s 7.2s forwards;
+  }
+
+  .output-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 30px;
+  }
+
+  .output-card {
+    background: linear-gradient(180deg, rgba(177, 255, 90, 0.06) 0%, rgba(12,13,18,0.95) 100%);
+    border: 1px solid rgba(177, 255, 90, 0.25);
+    border-radius: 16px;
+    padding: 26px;
+    opacity: 0;
+  }
+
+  .output-card.violet {
+    background: linear-gradient(180deg, rgba(157, 108, 255, 0.06) 0%, rgba(12,13,18,0.95) 100%);
+    border-color: rgba(157, 108, 255, 0.25);
+  }
+  .output-card.cyan {
+    background: linear-gradient(180deg, rgba(108, 240, 255, 0.06) 0%, rgba(12,13,18,0.95) 100%);
+    border-color: rgba(108, 240, 255, 0.25);
+  }
+  .output-card.amber {
+    background: linear-gradient(180deg, rgba(255, 184, 107, 0.06) 0%, rgba(12,13,18,0.95) 100%);
+    border-color: rgba(255, 184, 107, 0.25);
+  }
+
+  .output-card:nth-child(1) { animation: out-in 0.5s 7.3s forwards; }
+  .output-card:nth-child(2) { animation: out-in 0.5s 7.5s forwards; }
+  .output-card:nth-child(3) { animation: out-in 0.5s 7.7s forwards; }
+  .output-card:nth-child(4) { animation: out-in 0.5s 7.9s forwards; }
+
+  @keyframes out-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .output-card .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--signal);
+  }
+  .output-card.violet .label { color: var(--violet); }
+  .output-card.cyan .label { color: var(--cyan); }
+  .output-card.amber .label { color: var(--amber); }
+
+  .output-card .title {
+    margin-top: 10px;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--bone);
+  }
+
+  .output-card .meta {
+    margin-top: 8px;
+    font-size: 16px;
+    color: var(--mute);
+  }
+
+  /* SCENE 4 — Done stamp */
+  .scene.s4 {
+    opacity: 0;
+    animation: fade-in 0.5s 13.5s forwards;
+  }
+
+  .done-stamp {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    background: rgba(5, 5, 7, 0.92);
+    backdrop-filter: blur(20px);
+  }
+
+  .done-stamp .head {
+    font-size: 96px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .done-stamp .sub {
+    margin-top: 24px;
+    font-size: 28px;
+    color: var(--ash);
+    max-width: 700px;
+  }
+
+  .done-stamp .cta {
+    margin-top: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 28px;
+    background: var(--signal);
+    color: var(--void);
+    border-radius: 999px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .done-stamp .cta .pill {
+    background: rgba(5, 5, 7, 0.18);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .done-stamp .url {
+    margin-top: 30px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 24px;
+    color: var(--mute);
+  }
+  .done-stamp .url .arrow { color: var(--signal); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-bg"></div>
+
+  <div class="brand">
+    <svg class="logo-mark logo-svg-mark" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#b1ff5a"/><stop offset="0.55" stop-color="#6cf0ff"/><stop offset="1" stop-color="#9d6cff"/></linearGradient></defs>
+      <path d="M2 18 L2 4 L7.5 4 L11 11 L14.5 4 L20 4 L20 18 L16.5 18 L16.5 9.5 L13 16.5 L9 16.5 L5.5 9.5 L5.5 18 Z" fill="url(#logoGrad)"/>
+      <circle cx="20" cy="18" r="2" fill="#b1ff5a"/>
+    </svg>
+    <span><span class="word">MAGAS</span><span class="seven">7</span></span>
+  </div>
+
+  <div class="scene s1">
+    <div class="step-label"><span class="num">01</span>You give direction</div>
+    <div class="brief-box">
+      <div class="brief-prompt"><span class="arrow">›</span> magas7</div>
+      <div class="brief-text" id="brief-text"></div>
+    </div>
+  </div>
+
+  <div class="scene s2">
+    <div class="step-label"><span class="num">02</span>7 agents go to work</div>
+    <div class="agents-grid">
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Scout</div><div class="status">researching</div></div>
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Scribe</div><div class="status">drafting</div></div>
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Studio</div><div class="status">designing</div></div>
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Director</div><div class="status">planning</div></div>
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Conductor</div><div class="status">scheduling</div></div>
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Oracle</div><div class="status">measuring</div></div>
+      <div class="agent-chip active"><div class="pulse"></div><div class="name gradient-text">Sentinel</div><div class="status">brand QA</div></div>
+    </div>
+  </div>
+
+  <div class="scene s3">
+    <div class="step-label"><span class="num">03</span>The work ships back</div>
+    <div class="output-row">
+      <div class="output-card"><div class="label">SCRIBE</div><div class="title" id="o1-title">3 ad variants drafted</div><div class="meta" id="o1-meta">voice-locked · sources cited</div></div>
+      <div class="output-card violet"><div class="label">STUDIO</div><div class="title" id="o2-title">9 visuals · 5 ratios</div><div class="meta" id="o2-meta">brand tokens applied</div></div>
+      <div class="output-card cyan"><div class="label">CONDUCTOR</div><div class="title" id="o3-title">scheduled · 5 channels</div><div class="meta" id="o3-meta">UTM tagged · pixels live</div></div>
+      <div class="output-card amber"><div class="label">SENTINEL</div><div class="title" id="o4-title">QA pass · 1 flag</div><div class="meta" id="o4-meta">claim needs proof — PR #41</div></div>
+    </div>
+  </div>
+
+  <div class="scene s4">
+    <div class="done-stamp">
+      <div class="head gradient-text">Hours, not weeks.</div>
+      <div class="sub gradient-text-soft">Direction in. Campaigns out. <br>One thread. Seven specialists.</div>
+      <div class="cta">Download MAGAS7<span class="pill">Coming soon</span></div>
+      <div class="url"><span class="arrow">›</span> magas7.com</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const data = window.__MAGAS_DATA__ || {
+    brief: "Launch a 6-day pricing test. Two hypotheses, $4.2k budget, 5 channels.",
+  };
+
+  // Typewriter for the brief
+  const target = document.getElementById("brief-text");
+  const text = data.brief;
+  let i = 0;
+  function tick() {
+    if (i <= text.length) {
+      target.innerHTML = text.slice(0, i) + (i < text.length ? '<span class="caret"></span>' : '<span class="caret"></span>');
+      i++;
+      setTimeout(tick, 35);
+    }
+  }
+  setTimeout(tick, 350);
+
+  setTimeout(() => { window.__MAGAS_DONE__ = true; }, 18000);
+})();
+</script>
+</body>
+</html>

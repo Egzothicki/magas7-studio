@@ -1,0 +1,148 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  --void: #050507;
+  --surface: #0c0d12;
+  --surface-2: #11131a;
+  --edge: #1c1f2b;
+  --edge-2: #262a3a;
+  --bone: #f5f5f7;
+  --ash: #c2c4cf;
+  --mute: #8b8d9b;
+  --quiet: #5b5e6e;
+  --signal: #b1ff5a;
+  --signal-glow: #7df00b;
+  --violet: #9d6cff;
+  --cyan: #6cf0ff;
+  --amber: #ffb86b;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 1080px;
+  height: 1080px;
+  overflow: hidden;
+  font-family: "Geist", system-ui, sans-serif;
+  color: var(--bone);
+  background:
+    radial-gradient(900px 600px at 50% -100px, rgba(157, 108, 255, 0.20), transparent 70%),
+    radial-gradient(700px 500px at 100% 20%, rgba(108, 240, 255, 0.10), transparent 70%),
+    radial-gradient(700px 500px at 0% 80%, rgba(177, 255, 90, 0.08), transparent 70%),
+    var(--void);
+  -webkit-font-smoothing: antialiased;
+}
+
+.stage {
+  position: relative;
+  width: 1080px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 30%, transparent 80%);
+}
+
+.brand {
+  position: absolute;
+  top: 56px;
+  left: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  z-index: 50;
+}
+
+.brand .logo-mark {
+  width: 32px;
+  height: 32px;
+}
+
+.brand .word { color: var(--bone); }
+.brand .seven { color: var(--signal); margin-left: 2px; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #b1ff5a 0%, #6cf0ff 50%, #9d6cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-text-soft {
+  background: linear-gradient(180deg, #f5f5f7 0%, #8b8d9b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.url-stamp {
+  position: absolute;
+  bottom: 56px;
+  left: 56px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 20px;
+  color: var(--mute);
+  letter-spacing: 0.02em;
+  z-index: 50;
+}
+
+.url-stamp .arrow { color: var(--signal); margin-right: 8px; }
+
+.cta-stamp {
+  position: absolute;
+  bottom: 56px;
+  right: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  font-family: "Geist", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--void);
+  background: var(--signal);
+  border-radius: 999px;
+  letter-spacing: -0.01em;
+  z-index: 50;
+}
+
+.cta-stamp .pill {
+  background: rgba(5, 5, 7, 0.18);
+  color: var(--void);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 16px rgba(177, 255, 90, 0.7)); }
+  50% { filter: drop-shadow(0 0 6px rgba(177, 255, 90, 0.3)); }
+}
+
+.logo-svg-mark {
+  filter: drop-shadow(0 0 10px rgba(157, 108, 255, 0.4));
+}

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="base.css" />
+<style>
+  .stage { padding: 130px 64px; }
+
+  .headline {
+    font-size: 78px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    text-align: center;
+    margin-top: 30px;
+    opacity: 0;
+    animation: fade-in 0.6s 0.3s forwards;
+  }
+
+  .sub {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 26px;
+    color: var(--ash);
+    opacity: 0;
+    animation: fade-in 0.6s 0.6s forwards;
+  }
+
+  .stat-grid {
+    margin-top: 70px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+
+  .stat {
+    border: 1px solid var(--edge);
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 40px 36px;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .stat:nth-child(1) { animation: stat-in 0.6s 1.0s forwards; }
+  .stat:nth-child(2) { animation: stat-in 0.6s 1.25s forwards; }
+  .stat:nth-child(3) { animation: stat-in 0.6s 1.5s forwards; }
+  .stat:nth-child(4) { animation: stat-in 0.6s 1.75s forwards; }
+
+  @keyframes stat-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .stat .num {
+    font-size: 92px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+
+  .stat .label {
+    margin-top: 14px;
+    font-size: 22px;
+    color: var(--ash);
+    line-height: 1.35;
+  }
+
+  .closer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: rgba(5, 5, 7, 0.92);
+    backdrop-filter: blur(20px);
+    text-align: center;
+    opacity: 0;
+    animation: fade-in 0.6s 9.5s forwards;
+  }
+
+  .closer .head {
+    font-size: 88px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .closer .cta {
+    margin-top: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 28px;
+    background: var(--signal);
+    color: var(--void);
+    border-radius: 999px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .closer .cta .pill {
+    background: rgba(5, 5, 7, 0.18);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .closer .url {
+    margin-top: 30px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 22px;
+    color: var(--mute);
+  }
+  .closer .url .arrow { color: var(--signal); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid-bg"></div>
+
+  <div class="brand">
+    <svg class="logo-mark logo-svg-mark" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#b1ff5a"/><stop offset="0.55" stop-color="#6cf0ff"/><stop offset="1" stop-color="#9d6cff"/></linearGradient></defs>
+      <path d="M2 18 L2 4 L7.5 4 L11 11 L14.5 4 L20 4 L20 18 L16.5 18 L16.5 9.5 L13 16.5 L9 16.5 L5.5 9.5 L5.5 18 Z" fill="url(#logoGrad)"/>
+      <circle cx="20" cy="18" r="2" fill="#b1ff5a"/>
+    </svg>
+    <span><span class="word">MAGAS</span><span class="seven">7</span></span>
+  </div>
+
+  <div class="headline gradient-text-soft">What happens when <span class="gradient-text">agents do the work.</span></div>
+  <div class="sub" id="sub-text">Modeled on MAGAS7 alpha workloads vs. control teams.</div>
+
+  <div class="stat-grid" id="stat-grid">
+    <div class="stat"><div class="num gradient-text" id="n1">12×</div><div class="label" id="l1">campaigns per operator, per week</div></div>
+    <div class="stat"><div class="num gradient-text" id="n2">2 days</div><div class="label" id="l2">from brief to live</div></div>
+    <div class="stat"><div class="num gradient-text" id="n3">27</div><div class="label" id="l3">variants tested per launch</div></div>
+    <div class="stat"><div class="num gradient-text" id="n4">36 /wk</div><div class="label" id="l4">hours of manual work removed</div></div>
+  </div>
+
+  <div class="closer">
+    <div class="head gradient-text-soft">Stop doing the work.<br><span class="gradient-text">Start directing it.</span></div>
+    <div class="cta">Download MAGAS7<span class="pill">Coming soon</span></div>
+    <div class="url"><span class="arrow">›</span> magas7.com</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const data = window.__MAGAS_DATA__ || {};
+
+  function countUp(el, to, suffix, prefix, durMs, startMs) {
+    setTimeout(() => {
+      const startT = performance.now();
+      function tick(t) {
+        const p = Math.min(1, (t - startT) / durMs);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const isInt = Number.isInteger(to);
+        const v = to * eased;
+        el.textContent = (prefix || "") + (isInt ? Math.round(v) : v.toFixed(1)) + (suffix || "");
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }, startMs);
+  }
+
+  countUp(document.getElementById("n1"), 12, "×", "", 1400, 1400);
+  countUp(document.getElementById("n2"), 2, " days", "", 1400, 1650);
+  countUp(document.getElementById("n3"), 27, "", "", 1400, 1900);
+  countUp(document.getElementById("n4"), 36, " /wk", "", 1400, 2150);
+
+  if (data.headline) document.querySelector(".headline").innerHTML = data.headline;
+  if (data.sub) document.getElementById("sub-text").textContent = data.sub;
+
+  setTimeout(() => { window.__MAGAS_DONE__ = true; }, 14000);
+})();
+</script>
+</body>
+</html>
