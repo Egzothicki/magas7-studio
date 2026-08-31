@@ -6,7 +6,8 @@ import { renderVideo } from "./renderer.js";
 import { transcodeToMp4, extractPoster } from "./encoder.js";
 import { appendVideo, writeIndexHtml, type ManifestVideo } from "./publisher.js";
 import { nextTopic } from "./topics.js";
-import { maybePostToX } from "./xClient.js";
+import { maybePostToX, postImageToX } from "./xClient.js";
+import { generateCardImage, isCardImageAvailable, writeCardCopy } from "./card.js";
 
 const TEMPLATES_DIR = path.resolve(process.cwd(), "templates");
 
@@ -103,8 +104,36 @@ export async function generateOne(config: GenerateConfig): Promise<ManifestVideo
     lastAgentNumber: typeof topic.data.agentNumber === "string" ? topic.data.agentNumber : state.lastAgentNumber,
   });
 
-  // Optional X auto-post (no-op if creds missing).
-  await maybePostToX({ mp4Path, caption: topic.caption, log });
+  // X auto-post. The post is a poster-style CARD IMAGE — same treatment as
+  // devmarketing's deploy cards on WhatsApp (brand atmosphere render + composited
+  // typography). The video stays on the /studio showcase; if the card pipeline
+  // fails for any reason, fall back to posting the video so the cadence holds.
+  let posted = false;
+  if (isCardImageAvailable()) {
+    try {
+      const verdict = await writeCardCopy(topic);
+      log(`studio: card copy "${verdict.cardTitle} ${verdict.cardTitleAccent}"`);
+      const png = await generateCardImage(verdict, outDir);
+
+      // Publish the card next to the video so it has a public URL too.
+      const cardPath = path.join(outDir, "cards", `${id}.png`);
+      await fs.mkdir(path.dirname(cardPath), { recursive: true });
+      await fs.writeFile(cardPath, png);
+      log(`studio: card written ${cardPath} (${(png.byteLength / 1024).toFixed(0)}kb)`);
+
+      // null = creds absent = posting is off entirely (the video post would
+      // no-op too); a real posting failure throws into the catch below.
+      await postImageToX({ png, caption: verdict.tweet || topic.caption, log });
+      posted = true;
+    } catch (e) {
+      log(`studio: card pipeline failed, falling back to video post — ${String(e).slice(0, 300)}`);
+    }
+  } else {
+    log("studio: OPENROUTER_API_KEY not set — card image unavailable, posting video");
+  }
+  if (!posted) {
+    await maybePostToX({ mp4Path, caption: topic.caption, log });
+  }
 
   return video;
 }

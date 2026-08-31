@@ -138,6 +138,50 @@ async function postTweet(text: string, mediaId: string, creds: XCreds): Promise<
   return String(json?.data?.id ?? "");
 }
 
+/**
+ * Upload a still image (PNG) via the v1.1 media upload endpoint.
+ * Images fit in one shot; no INIT/APPEND/FINALIZE dance needed.
+ */
+async function uploadImage(png: Buffer, creds: XCreds, log: (msg: string) => void): Promise<string> {
+  const url = "https://upload.twitter.com/1.1/media/upload.json";
+  // OAuth 1.0a: multipart/form-data body params must NOT be signed — pass empty params.
+  const auth = oauthHeader("POST", url, {}, creds);
+
+  const form = new FormData();
+  form.append("media_category", "tweet_image");
+  // Uint8Array.from keeps @types/node happy: Buffer's ArrayBufferLike backing
+  // is not assignable to BlobPart under the stricter generics.
+  form.append("media", new Blob([Uint8Array.from(png)], { type: "image/png" }));
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `OAuth ${auth}` },
+    body: form,
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!resp.ok) throw new Error(`X image upload ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+  const json = (await resp.json()) as { media_id_string: string };
+  log(`x: image uploaded media_id=${json.media_id_string} bytes=${png.byteLength}`);
+  return json.media_id_string;
+}
+
+/**
+ * Post a still-image card to X. Throws on failure (unlike maybePostToX) so the
+ * caller can decide to fall back to the video post; returns null only when the
+ * creds are absent, which means "posting is off" rather than "posting failed".
+ */
+export async function postImageToX(opts: { png: Buffer; caption: string; log: (msg: string) => void }): Promise<string | null> {
+  const creds = readMagas7XCreds();
+  if (!creds) {
+    opts.log("x: MAGAS7_X_* creds not set — skipping image post");
+    return null;
+  }
+  const mediaId = await uploadImage(opts.png, creds, opts.log);
+  const tweetId = await postTweet(opts.caption, mediaId, creds);
+  opts.log(`x: posted image tweet=${tweetId} https://x.com/i/status/${tweetId}`);
+  return tweetId;
+}
+
 export async function maybePostToX(opts: { mp4Path: string; caption: string; log: (msg: string) => void }): Promise<string | null> {
   const creds = readMagas7XCreds();
   if (!creds) {
