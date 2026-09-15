@@ -14,6 +14,33 @@ const CRON_EXPR = process.env.STUDIO_GEN_CRON ?? "0 */6 * * *"; // every 6h
 const ADMIN_TOKEN = process.env.STUDIO_ADMIN_TOKEN ?? "";
 const RUN_ON_START = String(process.env.STUDIO_RUN_ON_START ?? "true").toLowerCase() === "true";
 
+// Browser origins allowed to call /api/ad-intel. Anything else gets no CORS
+// header, so third-party sites cannot embed this endpoint and bill our account.
+const AD_INTEL_ORIGINS = (process.env.AD_INTEL_ORIGINS ??
+  "https://magas7.com,https://www.magas7.com,https://app.magas7.com")
+  .split(",").map((s) => s.trim()).filter(Boolean);
+// Every cache miss on /api/ad-intel costs an LLM call, so cap it per IP.
+const AD_INTEL_MAX_PER_WINDOW = Number(process.env.AD_INTEL_MAX_PER_WINDOW ?? 20);
+const AD_INTEL_WINDOW_MS = Number(process.env.AD_INTEL_WINDOW_MS ?? 10 * 60_000);
+const adRate = new Map<string, { n: number; resetAt: number }>();
+
+function adIntelRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const e = adRate.get(ip);
+  if (!e || now > e.resetAt) {
+    if (adRate.size > 5000) for (const [k, v] of adRate) if (now > v.resetAt) adRate.delete(k);
+    adRate.set(ip, { n: 1, resetAt: now + AD_INTEL_WINDOW_MS });
+    return false;
+  }
+  e.n += 1;
+  return e.n > AD_INTEL_MAX_PER_WINDOW;
+}
+
+function clientIp(req: express.Request): string {
+  const fwd = String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim();
+  return fwd || req.ip || "unknown";
+}
+
 function nowIso(): string { return new Date().toISOString(); }
 function log(msg: string): void { console.log(`[${nowIso()}] ${msg}`); }
 
@@ -52,10 +79,12 @@ async function main(): Promise<void> {
   app.get("/health", (_req, res) => res.json({ ok: true, busy }));
 
   app.post("/trigger", async (req, res) => {
-    if (ADMIN_TOKEN) {
-      const header = String(req.headers.authorization ?? "");
-      const got = header.replace(/^Bearer\s+/i, "").trim();
-      if (got !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "unauthorized" });
+    // Fail closed: an unset STUDIO_ADMIN_TOKEN must reject everyone rather than
+    // skip the check, since a run spends OpenRouter credits.
+    const header = String(req.headers.authorization ?? "");
+    const got = header.replace(/^Bearer\s+/i, "").trim();
+    if (!ADMIN_TOKEN || got !== ADMIN_TOKEN) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
     }
     const result = await generate();
     res.json(result);
@@ -65,13 +94,22 @@ async function main(): Promise<void> {
   const adCache = new Map<string, { data: unknown; at: number }>();
   const AD_TTL = 30 * 60_000;
   app.get("/api/ad-intel", async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    const origin = String(req.headers.origin ?? "");
+    if (origin && AD_INTEL_ORIGINS.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+    }
     try {
       const q = String(req.query.q ?? "").trim().slice(0, 80);
       if (!q) return res.status(400).json({ error: "missing query" });
       const ck = q.toLowerCase();
       const hit = adCache.get(ck);
       if (hit && Date.now() - hit.at < AD_TTL) return res.json({ ...(hit.data as object), query: q, cached: true });
+
+      // Cache hits are free, so only rate-limit requests that would call the model.
+      if (adIntelRateLimited(clientIp(req))) {
+        return res.status(429).json({ error: "rate limited, try again shortly" });
+      }
 
       const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
       if (!apiKey) return res.status(503).json({ error: "ad-intel not configured" });
