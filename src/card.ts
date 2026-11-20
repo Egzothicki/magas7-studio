@@ -15,7 +15,7 @@ const IMAGE_MODEL = process.env.IMAGE_MODEL ?? "openai/gpt-5.4-image-2";
 const IMAGE_FALLBACK_MODEL = process.env.IMAGE_FALLBACK_MODEL ?? "google/gemini-2.5-flash-image";
 // gpt-5.4-image-2 can take several minutes; generation is async so a long wait is fine.
 const IMAGE_TIMEOUT_MS = Number(process.env.IMAGE_TIMEOUT_MS ?? 480_000);
-const OR_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OR_URL = `${process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1"}/chat/completions`; // llm-router on beehive-2
 const OR_HEADERS = () => ({
   Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
   "Content-Type": "application/json",
